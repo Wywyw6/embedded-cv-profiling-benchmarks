@@ -11,6 +11,7 @@ tance Z to see how size changes as a function of distance to the camera."""
 #Import
 import numpy as np
 import matplotlib.pyplot as plt
+from math import sqrt
 
 #Create Z
 Z = np.arange(10, 1001, 10)
@@ -29,6 +30,22 @@ print(x)
 
 #Plot x against Z
 plt.plot(Z, x, 'bo--')
+plt.ylabel("Image segement length, x")
+plt.xlabel("Distance real segement from aperture, Z")
+plt.show()
+
+#Alternative solution
+X1 = 5
+X2 = -5
+f = 1
+
+L = []
+for Z in range(10, 1001):
+    x1 = -f*X1/Z
+    x2 = -f*X2/Z
+    L.append(sqrt((x1-x2)**2))
+
+plt.plot(L)
 plt.ylabel("Image segement length, x")
 plt.xlabel("Distance real segement from aperture, Z")
 plt.show()
