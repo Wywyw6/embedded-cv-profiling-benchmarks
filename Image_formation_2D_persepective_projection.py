@@ -6,7 +6,10 @@ the following 2 tasks:
 ion, and compute the length of the segement, x.
 
 2) The length is plotted as a function of distance Z to see how size changes as a function of dis-
-tance Z to see how size changes as a function of distance to the camera."""
+tance Z to see how size changes as a function of distance to the camera.
+
+x is proportional to 1/Z. This explains persepective projection; objects further away from the camera
+looks smaller on image than objects closer to the aperture. """
 
 #Import
 import numpy as np
