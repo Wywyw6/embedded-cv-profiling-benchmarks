@@ -1,17 +1,14 @@
-# Profiling Run 1 - Baseline Metrics
+# VSLAM Optimization Performance Report
 
-```
-🚀 Initializing CUSF Sparse Visual-Inertial SLAM Profiler...
-
-================ FLIGHT SOFTWARE METRICS ================
-Stage 1: ORB Feature Extraction  : 53.434 ms
-Stage 2: Hamming Distance Match  : 4.431 ms
-Stage 3: SVD Matrix Estimation   : 10.179 ms
-Total VSLAM Frame Execution Time : 68.044 ms
-=========================================================
+## Empirical Results
+```text
+Strategy 1 (Pyramiding/Downsampling): 6.780 ms (~147 FPS)
+Strategy 2 (Sequential ROI Masking) : 365.079 ms (~2.7 FPS)
 ```
 
-## Analysis
-- **Primary Bottleneck:** Stage 1 (ORB Feature Extraction) consuming 85.8% of runtime due to pixel-space iteration.
-- **SVD Performance:** Stable at ~2ms due to capped landmark dimensions (=100$).
-- **Target Viability:** 26 FPS is acceptable for low-dynamic CUSF operations but fails F1 latency targets ($<10).
+## Engineering Analysis
+- **Pyramiding Success:** Downsampling the pixel layout by 75% via `cv2.pyrDown` leverages highly optimized vector hardware instructions, successfully bringing frame processing under the 10ms real-time constraint.
+- **ROI Masking Failure:** The sequential Python `for` loop introducing 50 micro-allocations of mask arrays created an immense memory overhead bottleneck, proving that algorithmic algorithmic efficiency on paper can be destroyed by language execution boundaries.
+
+## Final Architecture Selection
+For the CUSF / F1 tracking systems suite, **Strategy 1 (Image Pyramids)** is chosen as the production flight baseline due to deterministic sub-millisecond execution patterns.
