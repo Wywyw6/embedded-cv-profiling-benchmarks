@@ -4,10 +4,10 @@
 🚀 Initializing CUSF Sparse Visual-Inertial SLAM Profiler...
 
 ================ FLIGHT SOFTWARE METRICS ================
-Stage 1: ORB Feature Extraction  : 20.334 ms
-Stage 2: Hamming Distance Match  : 1.474 ms
-Stage 3: SVD Matrix Estimation   : 1.128 ms
-Total VSLAM Frame Execution Time : 22.935 ms
+Stage 1: ORB Feature Extraction  : 15.290 ms
+Stage 2: Hamming Distance Match  : 1.652 ms
+Stage 3: SVD Matrix Estimation   : 1.260 ms
+Total VSLAM Frame Execution Time : 18.203 ms
 =========================================================
 ```
 
