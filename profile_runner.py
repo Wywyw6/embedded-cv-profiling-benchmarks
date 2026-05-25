@@ -1,44 +1,43 @@
 import numpy as np
 import cv2
 import time
-from vslam_profiler import extract_orb_features, match_features, estimate_homography_svd
+from vslam_profiler import (
+    extract_orb_features_with_downsampling, 
+    extract_orb_in_roi, 
+    match_features, 
+    estimate_homography_svd
+)
 
-print("🚀 Initializing CUSF Sparse Visual-Inertial SLAM Profiler...")
-
-# 1. Create mock flight imagery (Simulating a rocket camera feed over terrain)
+# Setup mock flight frames
 np.random.seed(42)
 img_base = np.random.randint(0, 255, (512, 512), dtype=np.uint8)
 img1 = cv2.GaussianBlur(img_base, (5, 5), 0)
-# Introduce translation and slight rotation for frame 2
-rows, cols = img1.shape
-M = cv2.getRotationMatrix2D((cols/2, rows/2), 2, 1) # 2-degree spin
-img2 = cv2.warpAffine(img1, M, (cols, rows))
+M = cv2.getRotationMatrix2D((256, 256), 2, 1)
+img2 = cv2.warpAffine(img1, M, (512, 512))
 
-# --- PROFILE EXECUTION ---
+# Baseline standard extraction for comparison initialization
+orb_init = cv2.ORB_create(nfeatures=500)
+kp_base, desc_base = orb_init.detectAndCompute(img1, None)
 
-# STAGE 1: Feature Extraction
+print("⚡ Running Optimization Testbench...\n")
+
+# --- TEST 1: DOWNSAMPLING PIPELINE ---
 t0 = time.perf_counter_ns()
-kp1, desc1 = extract_orb_features(img1)
-kp2, desc2 = extract_orb_features(img2)
-t1 = time.perf_counter_ns()
+kp1_down, desc1_down = extract_orb_features_with_downsampling(img1)
+kp2_down, desc2_down = extract_orb_features_with_downsampling(img2)
+matches_down = match_features(desc1_down, desc2_down)
+H_down = estimate_homography_svd(kp1_down, kp2_down, matches_down)
+time_downsampling = (time.perf_counter_ns() - t0) / 1_000_000
 
-# STAGE 2: Feature Matching
-kp_match = match_features(desc1, desc2)
-t2 = time.perf_counter_ns()
+# --- TEST 2: ROI PIPELINE ---
+t0 = time.perf_counter_ns()
+# Only look at areas around the first 50 base landmarks to simulate an active track
+kp2_roi, desc2_roi = extract_orb_in_roi(img2, kp_base[:50])
+matches_roi = match_features(desc_base[:50], desc2_roi)
+H_roi = estimate_homography_svd(kp_base[:50], kp2_roi, matches_roi)
+time_roi = (time.perf_counter_ns() - t0) / 1_000_000
 
-# STAGE 3: Matrix SVD Solver
-homography = estimate_homography_svd(kp1, kp2, kp_match)
-t3 = time.perf_counter_ns()
-
-# --- CONVERT TELEMETRY TO MILLISECONDS ---
-extract_ms = (t1 - t0) / 1_000_000
-match_ms   = (t2 - t1) / 1_000_000
-svd_ms     = (t3 - t2) / 1_000_000
-total_ms   = (t3 - t0) / 1_000_000
-
-print("\n================ FLIGHT SOFTWARE METRICS ================")
-print(f"Stage 1: ORB Feature Extraction  : {extract_ms:.3f} ms")
-print(f"Stage 2: Hamming Distance Match  : {match_ms:.3f} ms")
-print(f"Stage 3: SVD Matrix Estimation   : {svd_ms:.3f} ms")
-print(f"Total VSLAM Frame Execution Time : {total_ms:.3f} ms")
+print("================ OPTIMIZATION BENCHMARKS ================")
+print(f"Strategy 1: Pyramiding/Downsampling Time : {time_downsampling:.3f} ms")
+print(f"Strategy 2: Region of Interest (ROI) Time : {time_roi:.3f} ms")
 print("=========================================================")
